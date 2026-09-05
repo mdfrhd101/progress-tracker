@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../analytics/analytics_cubit.dart';
 import '../services/backup_service.dart';
+import '../sync/lan_sync_screen.dart';
 import '../theme/app_theme.dart';
 import '../tracker/tracker_cubit.dart';
 
@@ -144,6 +145,22 @@ class _BackupSectionState extends State<BackupSection> {
                 ),
               ],
             ),
+          const SizedBox(height: 12),
+          const Divider(color: Colors.white10),
+          const SizedBox(height: 4),
+          const Text('Same Wi-Fi? Sync directly, no file:',
+              style: TextStyle(color: Colors.white38, fontSize: 12)),
+          const SizedBox(height: 8),
+          OutlinedButton.icon(
+            onPressed: () => Navigator.of(context)
+                .push(MaterialPageRoute(builder: (_) => const LanSyncScreen())),
+            style: OutlinedButton.styleFrom(
+                side: const BorderSide(color: Colors.white24),
+                foregroundColor: Colors.white,
+                minimumSize: const Size.fromHeight(46)),
+            icon: const Icon(Icons.wifi_tethering_rounded),
+            label: const Text('LAN sync (same Wi-Fi)'),
+          ),
         ],
       ),
     );

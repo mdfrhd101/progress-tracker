@@ -1,7 +1,7 @@
 name: progress_tracker
 description: "A 100% offline, single-user personal Progress Tracker with focus timer, DND deep-focus mode, and local analytics."
 publish_to: "none"
-version: 1.6.0+8
+version: 1.7.0+9
 
 environment:
   sdk: ">=3.3.0 <4.0.0"

@@ -248,7 +248,10 @@ class DatabaseHelper {
     row['uid'] ??= newUid();
     if (task.parentId != null) {
       final p = await db.query('tasks',
-          columns: ['uid'], where: 'id = ?', whereArgs: [task.parentId], limit: 1);
+          columns: ['uid'],
+          where: 'id = ?',
+          whereArgs: [task.parentId],
+          limit: 1);
       if (p.isNotEmpty) row['parent_uid'] = p.first['uid'];
     }
     return db.insert('tasks', row, conflictAlgorithm: ConflictAlgorithm.abort);
@@ -307,7 +310,10 @@ class DatabaseHelper {
     final row = session.toMap();
     row['uid'] ??= newUid();
     final t = await db.query('tasks',
-        columns: ['uid'], where: 'id = ?', whereArgs: [session.taskId], limit: 1);
+        columns: ['uid'],
+        where: 'id = ?',
+        whereArgs: [session.taskId],
+        limit: 1);
     if (t.isNotEmpty) row['task_uid'] = t.first['uid'];
     return db.insert('sessions', row);
   }
