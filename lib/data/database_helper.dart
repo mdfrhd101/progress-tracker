@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
@@ -22,7 +23,7 @@ class DatabaseHelper {
   static final DatabaseHelper instance = DatabaseHelper._internal();
 
   static const String _dbName = 'progress_tracker.db';
-  static const int _dbVersion = 4;
+  static const int _dbVersion = 5;
 
   /// Default tasks seeded on first launch.
   static const List<String> defaultTasks = <String>[
@@ -65,7 +66,9 @@ class DatabaseHelper {
         name           TEXT    UNIQUE NOT NULL,
         created_at     INTEGER NOT NULL,
         parent_id      INTEGER REFERENCES tasks(id) ON DELETE CASCADE,
-        target_seconds INTEGER
+        target_seconds INTEGER,
+        uid            TEXT,
+        parent_uid     TEXT
       )
     ''');
     await db.execute('CREATE INDEX idx_tasks_parent ON tasks(parent_id)');
@@ -80,6 +83,8 @@ class DatabaseHelper {
         break_duration_seconds  INTEGER NOT NULL,
         is_deep_focus           INTEGER NOT NULL DEFAULT 0,
         date_string             TEXT    NOT NULL,
+        uid                     TEXT,
+        task_uid                TEXT,
         FOREIGN KEY (task_id) REFERENCES tasks(id) ON DELETE CASCADE
       )
     ''');
@@ -113,6 +118,7 @@ class DatabaseHelper {
       batch.insert('tasks', {'name': name, 'created_at': now});
     }
     await batch.commit(noResult: true);
+    await _backfillUids(db);
   }
 
   /// Incremental migrations.
@@ -133,6 +139,63 @@ class DatabaseHelper {
     }
     if (oldVersion < 4) {
       await _createMultiTable(db);
+    }
+    if (oldVersion < 5) {
+      await db.execute('ALTER TABLE tasks ADD COLUMN uid TEXT');
+      await db.execute('ALTER TABLE tasks ADD COLUMN parent_uid TEXT');
+      await db.execute('ALTER TABLE sessions ADD COLUMN uid TEXT');
+      await db.execute('ALTER TABLE sessions ADD COLUMN task_uid TEXT');
+      await _backfillUids(db);
+    }
+  }
+
+  static final Random _rng = Random.secure();
+
+  /// Stable, globally-unique id for a row (for cross-device merge).
+  static String newUid() {
+    final ts = DateTime.now().microsecondsSinceEpoch.toRadixString(16);
+    final r =
+        List.generate(16, (_) => _rng.nextInt(16).toRadixString(16)).join();
+    return '$ts-$r';
+  }
+
+  /// Gives every task/session a uid (and resolves parent_uid / task_uid) where
+  /// missing. Safe to run repeatedly.
+  Future<void> _backfillUids(Database db) async {
+    // tasks: uid
+    final tasks = await db.query('tasks');
+    final idToUid = <int, String>{};
+    for (final t in tasks) {
+      var uid = t['uid'] as String?;
+      if (uid == null || uid.isEmpty) {
+        uid = newUid();
+        await db.update('tasks', {'uid': uid},
+            where: 'id = ?', whereArgs: [t['id']]);
+      }
+      idToUid[t['id'] as int] = uid;
+    }
+    // tasks: parent_uid from parent_id
+    for (final t in tasks) {
+      final pid = t['parent_id'] as int?;
+      if (pid != null && idToUid[pid] != null) {
+        await db.update('tasks', {'parent_uid': idToUid[pid]},
+            where: 'id = ?', whereArgs: [t['id']]);
+      }
+    }
+    // sessions: uid + task_uid
+    final sessions = await db.query('sessions');
+    for (final se in sessions) {
+      final patch = <String, Object?>{};
+      final uid = se['uid'] as String?;
+      if (uid == null || uid.isEmpty) patch['uid'] = newUid();
+      final tuid = se['task_uid'] as String?;
+      if (tuid == null || tuid.isEmpty) {
+        patch['task_uid'] = idToUid[se['task_id'] as int];
+      }
+      if (patch.isNotEmpty) {
+        await db
+            .update('sessions', patch, where: 'id = ?', whereArgs: [se['id']]);
+      }
     }
   }
 
@@ -181,8 +244,14 @@ class DatabaseHelper {
   /// (UNIQUE constraint) — callers surface a friendly message.
   Future<int> insertTask(Task task) async {
     final db = await database;
-    return db.insert('tasks', task.toMap(),
-        conflictAlgorithm: ConflictAlgorithm.abort);
+    final row = task.toMap();
+    row['uid'] ??= newUid();
+    if (task.parentId != null) {
+      final p = await db.query('tasks',
+          columns: ['uid'], where: 'id = ?', whereArgs: [task.parentId], limit: 1);
+      if (p.isNotEmpty) row['parent_uid'] = p.first['uid'];
+    }
+    return db.insert('tasks', row, conflictAlgorithm: ConflictAlgorithm.abort);
   }
 
   Future<List<Task>> getAllTasks() async {
@@ -235,7 +304,12 @@ class DatabaseHelper {
 
   Future<int> insertSession(Session session) async {
     final db = await database;
-    return db.insert('sessions', session.toMap());
+    final row = session.toMap();
+    row['uid'] ??= newUid();
+    final t = await db.query('tasks',
+        columns: ['uid'], where: 'id = ?', whereArgs: [session.taskId], limit: 1);
+    if (t.isNotEmpty) row['task_uid'] = t.first['uid'];
+    return db.insert('sessions', row);
   }
 
   /// History list data — every session joined with its task name,
@@ -286,6 +360,121 @@ class DatabaseHelper {
   Future<void> clearActiveSession() async {
     final db = await database;
     await db.delete('active_session', where: 'id = 1');
+  }
+
+  // --------------------------------------------------------- Backup / sync
+
+  /// Everything needed to reconstruct/merge this device's data elsewhere.
+  Future<Map<String, Object?>> exportData() async {
+    final db = await database;
+    final tasks = await db.query('tasks');
+    final sessions = await db.query('sessions');
+    return {
+      'schema': 1,
+      'exportedAt': DateTime.now().millisecondsSinceEpoch,
+      'tasks': tasks
+          .map((t) => {
+                'uid': t['uid'],
+                'name': t['name'],
+                'created_at': t['created_at'],
+                'parent_uid': t['parent_uid'],
+                'target_seconds': t['target_seconds'],
+              })
+          .toList(),
+      'sessions': sessions
+          .map((se) => {
+                'uid': se['uid'],
+                'task_uid': se['task_uid'],
+                'start_time': se['start_time'],
+                'end_time': se['end_time'],
+                'active_duration_seconds': se['active_duration_seconds'],
+                'break_duration_seconds': se['break_duration_seconds'],
+                'is_deep_focus': se['is_deep_focus'],
+                'date_string': se['date_string'],
+              })
+          .toList(),
+    };
+  }
+
+  /// Union-merges an exported payload into this DB (by uid — never duplicates,
+  /// never deletes local data). Returns (tasksAdded, sessionsAdded).
+  Future<(int, int)> mergeData(Map<String, Object?> data) async {
+    final db = await database;
+    final incomingTasks =
+        (data['tasks'] as List?)?.cast<Map<String, Object?>>() ?? const [];
+    final incomingSessions =
+        (data['sessions'] as List?)?.cast<Map<String, Object?>>() ?? const [];
+
+    var tAdded = 0, sAdded = 0;
+
+    await db.transaction((txn) async {
+      // Existing uid -> id maps.
+      final uidToId = <String, int>{};
+      for (final t in await txn.query('tasks', columns: ['id', 'uid'])) {
+        final u = t['uid'] as String?;
+        if (u != null) uidToId[u] = t['id'] as int;
+      }
+      final existingSessionUids = <String>{
+        for (final se in await txn.query('sessions', columns: ['uid']))
+          if (se['uid'] != null) se['uid'] as String,
+      };
+      final existingNames = <String, int>{
+        for (final t in await txn.query('tasks', columns: ['id', 'name']))
+          t['name'] as String: t['id'] as int,
+      };
+
+      // Pass 1: insert new tasks (without parent link yet).
+      for (final t in incomingTasks) {
+        final uid = t['uid'] as String?;
+        if (uid == null || uidToId.containsKey(uid)) continue;
+        var name = (t['name'] as String?) ?? 'Task';
+        // Names are UNIQUE; if a different uid already owns the name, dedupe it.
+        if (existingNames.containsKey(name)) name = '$name (2)';
+        final id = await txn.insert('tasks', {
+          'name': name,
+          'created_at':
+              t['created_at'] ?? DateTime.now().millisecondsSinceEpoch,
+          'target_seconds': t['target_seconds'],
+          'uid': uid,
+          'parent_uid': t['parent_uid'],
+        });
+        uidToId[uid] = id;
+        existingNames[name] = id;
+        tAdded++;
+      }
+      // Pass 2: resolve parent links by uid.
+      for (final t in incomingTasks) {
+        final uid = t['uid'] as String?;
+        final puid = t['parent_uid'] as String?;
+        if (uid == null || puid == null) continue;
+        final id = uidToId[uid];
+        final pid = uidToId[puid];
+        if (id != null && pid != null) {
+          await txn.update('tasks', {'parent_id': pid, 'parent_uid': puid},
+              where: 'id = ?', whereArgs: [id]);
+        }
+      }
+      // Pass 3: insert new sessions.
+      for (final se in incomingSessions) {
+        final uid = se['uid'] as String?;
+        if (uid == null || existingSessionUids.contains(uid)) continue;
+        final taskId = uidToId[se['task_uid']];
+        if (taskId == null) continue; // orphan; skip
+        await txn.insert('sessions', {
+          'task_id': taskId,
+          'start_time': se['start_time'],
+          'end_time': se['end_time'],
+          'active_duration_seconds': se['active_duration_seconds'],
+          'break_duration_seconds': se['break_duration_seconds'],
+          'is_deep_focus': se['is_deep_focus'] ?? 0,
+          'date_string': se['date_string'],
+          'uid': uid,
+          'task_uid': se['task_uid'],
+        });
+        sAdded++;
+      }
+    });
+    return (tAdded, sAdded);
   }
 
   // ------------------------------------------------ Multitasking (parallel)

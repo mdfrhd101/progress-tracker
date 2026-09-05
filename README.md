@@ -5,6 +5,11 @@ A 100% offline, single-user focus/productivity tracker for Android. Flutter +
 timestamp-based timer, and an optional Do-Not-Disturb (Deep Focus) mode.
 
 ## Highlights
+- **Backup & transfer (v1.6, offline sync — step 1/3)** — Settings → Backup & transfer:
+  **Export** a JSON backup and share it (Nearby Share / Bluetooth / cable), then **Import** it on
+  another phone. Import **merges** by a per-record UUID — it never overwrites or deletes existing
+  data, and re-importing the same file changes nothing. No account, no internet. LAN and cloud
+  sync build on this same merge core.
 - **Multitasking (v1.5)** — sidebar → Multitasking: run several task timers at the same time,
   start more whenever you like, each keeps its own time (Break / Resume / Stop per timer).
   Stopping saves a normal session, so history/analytics/targets include it. Survives

@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../theme/app_theme.dart';
 import 'settings_cubit.dart';
+import 'backup_section.dart';
 import 'update_section.dart';
 
 /// Look & feel + update entry point. Everything is applied live and saved.
@@ -86,6 +87,8 @@ class SettingsScreen extends StatelessWidget {
                   },
                 ),
               ),
+              const SizedBox(height: 16),
+              const BackupSection(),
               const SizedBox(height: 16),
               const UpdateSection(),
               const SizedBox(height: 24),

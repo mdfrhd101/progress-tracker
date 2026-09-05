@@ -9,6 +9,7 @@ import android.provider.Settings
 import androidx.annotation.NonNull
 import androidx.core.content.FileProvider
 import java.io.File
+import io.flutter.plugin.common.MethodChannel.Result
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
@@ -25,6 +26,27 @@ class MainActivity : FlutterActivity() {
     private val channel = "com.octagram.progress_tracker/dnd"
 
     private val platformChannel = "com.octagram.progress_tracker/platform"
+
+    private val REQ_PICK_JSON = 4711
+    private var pendingPick: Result? = null
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == REQ_PICK_JSON) {
+            val cb = pendingPick
+            pendingPick = null
+            if (cb == null) return
+            val uri = data?.data
+            if (resultCode != RESULT_OK || uri == null) { cb.success(null); return }
+            try {
+                val out = File(cacheDir, "import_backup.json")
+                contentResolver.openInputStream(uri)?.use { input ->
+                    out.outputStream().use { input.copyTo(it) }
+                }
+                cb.success(out.absolutePath)
+            } catch (e: Exception) { cb.success(null) }
+        }
+    }
 
     override fun configureFlutterEngine(@NonNull flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
@@ -45,6 +67,39 @@ class MainActivity : FlutterActivity() {
                             result.success(false)
                         }
                     }
+                    // Share a local file (backup export) via the system share sheet.
+                    "shareFile" -> {
+                        val path = call.argument<String>("path")
+                        val mime = call.argument<String>("mime") ?: "application/json"
+                        if (path.isNullOrBlank()) { result.success(false); return@setMethodCallHandler }
+                        try {
+                            val uri = FileProvider.getUriForFile(this, "$packageName.fileprovider", File(path))
+                            val send = Intent(Intent.ACTION_SEND)
+                                .setType(mime)
+                                .putExtra(Intent.EXTRA_STREAM, uri)
+                                .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                            startActivity(Intent.createChooser(send, "Share backup")
+                                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+                            result.success(true)
+                        } catch (e: Exception) { result.success(false) }
+                    }
+
+                    // Pick a JSON backup; copies it to cache and returns the local path (or null).
+                    "pickJson" -> {
+                        if (pendingPick != null) { result.success(null); return@setMethodCallHandler }
+                        pendingPick = result
+                        try {
+                            val intent = Intent(Intent.ACTION_OPEN_DOCUMENT)
+                                .addCategory(Intent.CATEGORY_OPENABLE)
+                                .setType("*/*")
+                                .putExtra(Intent.EXTRA_MIME_TYPES, arrayOf("application/json", "text/plain", "application/octet-stream"))
+                            startActivityForResult(intent, REQ_PICK_JSON)
+                        } catch (e: Exception) {
+                            pendingPick = null
+                            result.success(null)
+                        }
+                    }
+
                     // Primary device ABI, e.g. "arm64-v8a" (picks the matching release asset).
                     "getAbi" -> result.success(Build.SUPPORTED_ABIS.firstOrNull() ?: "arm64-v8a")
 

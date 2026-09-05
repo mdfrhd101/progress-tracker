@@ -280,7 +280,7 @@ void main() {
           Task.create('Sub', parentId: tasks.single.id, targetSeconds: 10));
       expect((await db.getTaskById(subId))!.parentId,
           tasks.single.id); // v3 columns work
-      expect(await (await db.database).getVersion(), 4);
+      expect(await (await db.database).getVersion(), 5);
       // v4 multitasking table works.
       final mId = await db.insertMulti({
         'task_id': tasks.single.id,
