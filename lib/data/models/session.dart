@@ -114,7 +114,8 @@ class DailyTotal extends Equatable {
   final String dateString; // "YYYY-MM-DD"
   final int totalActiveSeconds;
 
-  const DailyTotal({required this.dateString, required this.totalActiveSeconds});
+  const DailyTotal(
+      {required this.dateString, required this.totalActiveSeconds});
 
   @override
   List<Object?> get props => [dateString, totalActiveSeconds];

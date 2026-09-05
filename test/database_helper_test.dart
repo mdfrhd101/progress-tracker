@@ -25,8 +25,7 @@ void main() {
 
   test('seeds the 3 default tasks on first launch', () async {
     final tasks = await db.getAllTasks();
-    expect(tasks.map((t) => t.name),
-        containsAll(DatabaseHelper.defaultTasks));
+    expect(tasks.map((t) => t.name), containsAll(DatabaseHelper.defaultTasks));
     expect(await db.taskCount(), 3);
   });
 
@@ -143,7 +142,8 @@ void main() {
     expect(await db.averageSessionSeconds(AnalyticsRange.allTime), 900);
   });
 
-  test('re-inserting a deleted session with its id restores it (undo)', () async {
+  test('re-inserting a deleted session with its id restores it (undo)',
+      () async {
     final tasks = await db.getAllTasks();
     final today = Session.dateStringFrom(DateTime.now().millisecondsSinceEpoch);
     final id = await db.insertSession(Session(
@@ -165,9 +165,11 @@ void main() {
     expect(restored.isDeepFocus, isTrue);
     expect(restored.activeDurationSeconds, 300);
   });
-  test('sub-tasks: parent path in views/breakdown, own totals, cascade', () async {
+  test('sub-tasks: parent path in views/breakdown, own totals, cascade',
+      () async {
     final today = Session.dateStringFrom(DateTime.now().millisecondsSinceEpoch);
-    final cloudId = await db.insertTask(Task.create('Cloud', targetSeconds: 360000));
+    final cloudId =
+        await db.insertTask(Task.create('Cloud', targetSeconds: 360000));
     final pyId = await db.insertTask(
         Task.create('Python', parentId: cloudId, targetSeconds: 36000));
     final tasks = await db.getAllTasks();
@@ -190,7 +192,8 @@ void main() {
 
     // History shows the path, breakdown names use "Parent › Sub".
     final views = await db.getAllSessionViews();
-    expect(views.map((v) => v.displayName), containsAll(['Cloud › Python', 'Cloud']));
+    expect(views.map((v) => v.displayName),
+        containsAll(['Cloud › Python', 'Cloud']));
     final bd = await db.taskBreakdown(AnalyticsRange.today);
     expect(bd.map((t) => t.taskName), containsAll(['Cloud › Python', 'Cloud']));
 
@@ -216,27 +219,54 @@ void main() {
     await db.close();
     final v1 = await databaseFactory.openDatabase(
       inMemoryDatabasePath,
-      options: OpenDatabaseOptions(version: 1, onCreate: (d, _) async {
-        await d.execute('CREATE TABLE tasks (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT UNIQUE NOT NULL, created_at INTEGER NOT NULL)');
-        await d.execute('CREATE TABLE sessions (id INTEGER PRIMARY KEY AUTOINCREMENT, task_id INTEGER NOT NULL, start_time INTEGER NOT NULL, end_time INTEGER NOT NULL, active_duration_seconds INTEGER NOT NULL, break_duration_seconds INTEGER NOT NULL, is_deep_focus INTEGER NOT NULL DEFAULT 0, date_string TEXT NOT NULL, FOREIGN KEY (task_id) REFERENCES tasks(id) ON DELETE CASCADE)');
-        await d.execute('CREATE TABLE active_session (id INTEGER PRIMARY KEY CHECK (id = 1), task_id INTEGER NOT NULL, start_time INTEGER NOT NULL, accumulated_break_ms INTEGER NOT NULL, current_break_start_ms INTEGER NOT NULL, is_deep_focus INTEGER NOT NULL, status TEXT NOT NULL)');
-        await d.insert('tasks', {'name': 'Legacy', 'created_at': 1});
-        await d.insert('sessions', {'task_id': 1, 'start_time': 0, 'end_time': 0, 'active_duration_seconds': 42, 'break_duration_seconds': 0, 'is_deep_focus': 0, 'date_string': '2026-01-01'});
-      }),
+      options: OpenDatabaseOptions(
+          version: 1,
+          onCreate: (d, _) async {
+            await d.execute(
+                'CREATE TABLE tasks (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT UNIQUE NOT NULL, created_at INTEGER NOT NULL)');
+            await d.execute(
+                'CREATE TABLE sessions (id INTEGER PRIMARY KEY AUTOINCREMENT, task_id INTEGER NOT NULL, start_time INTEGER NOT NULL, end_time INTEGER NOT NULL, active_duration_seconds INTEGER NOT NULL, break_duration_seconds INTEGER NOT NULL, is_deep_focus INTEGER NOT NULL DEFAULT 0, date_string TEXT NOT NULL, FOREIGN KEY (task_id) REFERENCES tasks(id) ON DELETE CASCADE)');
+            await d.execute(
+                'CREATE TABLE active_session (id INTEGER PRIMARY KEY CHECK (id = 1), task_id INTEGER NOT NULL, start_time INTEGER NOT NULL, accumulated_break_ms INTEGER NOT NULL, current_break_start_ms INTEGER NOT NULL, is_deep_focus INTEGER NOT NULL, status TEXT NOT NULL)');
+            await d.insert('tasks', {'name': 'Legacy', 'created_at': 1});
+            await d.insert('sessions', {
+              'task_id': 1,
+              'start_time': 0,
+              'end_time': 0,
+              'active_duration_seconds': 42,
+              'break_duration_seconds': 0,
+              'is_deep_focus': 0,
+              'date_string': '2026-01-01'
+            });
+          }),
     );
     // In-memory DBs are per-connection, so run the upgrade on THIS connection.
     expect(await v1.getVersion(), 1);
     await v1.close();
     // Real upgrade path: a file-backed DB that starts at v1, then reopened by the helper.
-    final path = '${Directory.systemTemp.path}/pt_migr_${DateTime.now().microsecondsSinceEpoch}.db';
+    final path =
+        '${Directory.systemTemp.path}/pt_migr_${DateTime.now().microsecondsSinceEpoch}.db';
     final f1 = await databaseFactory.openDatabase(path,
-      options: OpenDatabaseOptions(version: 1, onCreate: (d, _) async {
-        await d.execute('CREATE TABLE tasks (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT UNIQUE NOT NULL, created_at INTEGER NOT NULL)');
-        await d.execute('CREATE TABLE sessions (id INTEGER PRIMARY KEY AUTOINCREMENT, task_id INTEGER NOT NULL, start_time INTEGER NOT NULL, end_time INTEGER NOT NULL, active_duration_seconds INTEGER NOT NULL, break_duration_seconds INTEGER NOT NULL, is_deep_focus INTEGER NOT NULL DEFAULT 0, date_string TEXT NOT NULL, FOREIGN KEY (task_id) REFERENCES tasks(id) ON DELETE CASCADE)');
-        await d.execute('CREATE TABLE active_session (id INTEGER PRIMARY KEY CHECK (id = 1), task_id INTEGER NOT NULL, start_time INTEGER NOT NULL, accumulated_break_ms INTEGER NOT NULL, current_break_start_ms INTEGER NOT NULL, is_deep_focus INTEGER NOT NULL, status TEXT NOT NULL)');
-        await d.insert('tasks', {'name': 'Legacy', 'created_at': 1});
-        await d.insert('sessions', {'task_id': 1, 'start_time': 0, 'end_time': 0, 'active_duration_seconds': 42, 'break_duration_seconds': 0, 'is_deep_focus': 0, 'date_string': '2026-01-01'});
-      }));
+        options: OpenDatabaseOptions(
+            version: 1,
+            onCreate: (d, _) async {
+              await d.execute(
+                  'CREATE TABLE tasks (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT UNIQUE NOT NULL, created_at INTEGER NOT NULL)');
+              await d.execute(
+                  'CREATE TABLE sessions (id INTEGER PRIMARY KEY AUTOINCREMENT, task_id INTEGER NOT NULL, start_time INTEGER NOT NULL, end_time INTEGER NOT NULL, active_duration_seconds INTEGER NOT NULL, break_duration_seconds INTEGER NOT NULL, is_deep_focus INTEGER NOT NULL DEFAULT 0, date_string TEXT NOT NULL, FOREIGN KEY (task_id) REFERENCES tasks(id) ON DELETE CASCADE)');
+              await d.execute(
+                  'CREATE TABLE active_session (id INTEGER PRIMARY KEY CHECK (id = 1), task_id INTEGER NOT NULL, start_time INTEGER NOT NULL, accumulated_break_ms INTEGER NOT NULL, current_break_start_ms INTEGER NOT NULL, is_deep_focus INTEGER NOT NULL, status TEXT NOT NULL)');
+              await d.insert('tasks', {'name': 'Legacy', 'created_at': 1});
+              await d.insert('sessions', {
+                'task_id': 1,
+                'start_time': 0,
+                'end_time': 0,
+                'active_duration_seconds': 42,
+                'break_duration_seconds': 0,
+                'is_deep_focus': 0,
+                'date_string': '2026-01-01'
+              });
+            }));
     await f1.close();
 
     DatabaseHelper.databasePathOverride = path;
@@ -246,13 +276,17 @@ void main() {
       expect(tasks.single.parentId, isNull); // new column readable
       expect(await db.sessionCount(), 1); // data preserved
       await db.setPref('k', 'v'); // v2 table exists
-      final subId = await db.insertTask(Task.create('Sub', parentId: tasks.single.id, targetSeconds: 10));
-      expect((await db.getTaskById(subId))!.parentId, tasks.single.id); // v3 columns work
+      final subId = await db.insertTask(
+          Task.create('Sub', parentId: tasks.single.id, targetSeconds: 10));
+      expect((await db.getTaskById(subId))!.parentId,
+          tasks.single.id); // v3 columns work
       expect(await (await db.database).getVersion(), 3);
     } finally {
       await db.close();
       DatabaseHelper.databasePathOverride = inMemoryDatabasePath;
-      try { File(path).deleteSync(); } catch (_) {}
+      try {
+        File(path).deleteSync();
+      } catch (_) {}
     }
   });
 }

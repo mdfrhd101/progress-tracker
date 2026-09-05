@@ -14,7 +14,8 @@ class DndService {
   /// True if ACCESS_NOTIFICATION_POLICY has been granted by the user.
   Future<bool> isPermissionGranted() async {
     try {
-      return await _channel.invokeMethod<bool>('isDndPermissionGranted') ?? false;
+      return await _channel.invokeMethod<bool>('isDndPermissionGranted') ??
+          false;
     } on PlatformException {
       return false;
     } on MissingPluginException {

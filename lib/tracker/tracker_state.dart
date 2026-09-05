@@ -19,7 +19,8 @@ class TrackerState extends Equatable {
 
   final int startTimeMs; // session start (0 when idle)
   final int accumulatedBreakMs; // sum of completed breaks
-  final int currentBreakStartMs; // start of the ongoing break (0 if not on break)
+  final int
+      currentBreakStartMs; // start of the ongoing break (0 if not on break)
   final bool isDeepFocus; // DND engaged for this session
 
   final int nowMs; // ticks every second while running (drives the display)

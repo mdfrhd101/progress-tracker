@@ -24,8 +24,8 @@ class Formatters {
   }
 
   /// Epoch ms → "08:05 AM".
-  static String clock(int epochMs) =>
-      DateFormat('hh:mm a').format(DateTime.fromMillisecondsSinceEpoch(epochMs));
+  static String clock(int epochMs) => DateFormat('hh:mm a')
+      .format(DateTime.fromMillisecondsSinceEpoch(epochMs));
 
   /// Two epoch-ms timestamps → "08:00 AM - 09:30 AM".
   static String timeRange(int startMs, int endMs) =>

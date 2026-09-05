@@ -53,8 +53,7 @@ class Task extends Equatable {
   bool get hasTarget => targetSeconds != null && targetSeconds! > 0;
 
   /// Target expressed in hours (for display / editing).
-  double? get targetHours =>
-      hasTarget ? targetSeconds! / 3600.0 : null;
+  double? get targetHours => hasTarget ? targetSeconds! / 3600.0 : null;
 
   Task copyWith({
     int? id,

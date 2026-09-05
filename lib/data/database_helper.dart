@@ -175,8 +175,8 @@ class DatabaseHelper {
   /// Updates name / parent / target of an existing task (by id).
   Future<int> updateTask(Task task) async {
     final db = await database;
-    return db.update('tasks', task.toMap(),
-        where: 'id = ?', whereArgs: [task.id]);
+    return db
+        .update('tasks', task.toMap(), where: 'id = ?', whereArgs: [task.id]);
   }
 
   /// All-time net focus seconds recorded DIRECTLY on each task
@@ -187,14 +187,14 @@ class DatabaseHelper {
       'SELECT task_id, SUM(active_duration_seconds) AS total FROM sessions GROUP BY task_id',
     );
     return {
-      for (final r in rows)
-        (r['task_id'] as int): ((r['total'] as int?) ?? 0),
+      for (final r in rows) (r['task_id'] as int): ((r['total'] as int?) ?? 0),
     };
   }
 
   Future<Task?> getTaskById(int id) async {
     final db = await database;
-    final rows = await db.query('tasks', where: 'id = ?', whereArgs: [id], limit: 1);
+    final rows =
+        await db.query('tasks', where: 'id = ?', whereArgs: [id], limit: 1);
     return rows.isEmpty ? null : Task.fromMap(rows.first);
   }
 
@@ -292,12 +292,11 @@ class DatabaseHelper {
         0;
   }
 
-  Future<int> todayFocusSeconds() =>
-      focusSecondsForDate(_todayString());
+  Future<int> todayFocusSeconds() => focusSecondsForDate(_todayString());
 
   /// Last 7 calendar days including today.
-  Future<int> weeklyFocusSeconds() =>
-      focusSecondsSince(_dayString(_todayMidnight().subtract(const Duration(days: 6))));
+  Future<int> weeklyFocusSeconds() => focusSecondsSince(
+      _dayString(_todayMidnight().subtract(const Duration(days: 6))));
 
   /// Number of sessions recorded on a given day.
   Future<int> sessionCountForDate(String dateString) async {
@@ -328,7 +327,8 @@ class DatabaseHelper {
   /// Per-task totals for the given range, biggest first, zero-totals excluded.
   Future<List<TaskTotal>> taskBreakdown(AnalyticsRange range) async {
     final db = await database;
-    final (String where, List<Object?> args) = _rangeClause(range, 's.date_string');
+    final (String where, List<Object?> args) =
+        _rangeClause(range, 's.date_string');
     final rows = await db.rawQuery('''
       SELECT CASE WHEN p.name IS NULL THEN t.name
                   ELSE p.name || ' › ' || t.name END AS task_name,
@@ -379,7 +379,8 @@ class DatabaseHelper {
       case AnalyticsRange.today:
         return ('WHERE $column = ?', [_todayString()]);
       case AnalyticsRange.week:
-        final start = _dayString(_todayMidnight().subtract(const Duration(days: 6)));
+        final start =
+            _dayString(_todayMidnight().subtract(const Duration(days: 6)));
         return ('WHERE $column >= ?', [start]);
       case AnalyticsRange.allTime:
         return ('', const []);

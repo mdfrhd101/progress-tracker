@@ -3,6 +3,7 @@ package com.example.progress_tracker
 import android.app.NotificationManager
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import android.os.Build
 import android.provider.Settings
 import androidx.annotation.NonNull
@@ -21,8 +22,30 @@ class MainActivity : FlutterActivity() {
 
     private val channel = "com.octagram.progress_tracker/dnd"
 
+    private val platformChannel = "com.octagram.progress_tracker/platform"
+
     override fun configureFlutterEngine(@NonNull flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
+
+        // Permission-free helpers (open a URL in the system browser).
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, platformChannel)
+            .setMethodCallHandler { call, result ->
+                when (call.method) {
+                    "openUrl" -> {
+                        val url = call.argument<String>("url")
+                        if (url.isNullOrBlank()) { result.success(false); return@setMethodCallHandler }
+                        try {
+                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+                                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                            startActivity(intent)
+                            result.success(true)
+                        } catch (e: Exception) {
+                            result.success(false)
+                        }
+                    }
+                    else -> result.notImplemented()
+                }
+            }
 
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, channel)
             .setMethodCallHandler { call, result ->

@@ -140,7 +140,8 @@ class TrackerCubit extends Cubit<TrackerState> {
       final tasks = await _db.getAllTasks();
       Task? selected = state.selectedTask;
       if (selected?.id == task.id) selected = updated;
-      emit(state.copyWith(tasks: tasks, selectedTask: selected, clearError: true));
+      emit(state.copyWith(
+          tasks: tasks, selectedTask: selected, clearError: true));
       return true;
     } on DatabaseException {
       emit(state.copyWith(errorMessage: 'A task named "$name" already exists'));

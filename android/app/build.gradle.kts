@@ -54,8 +54,19 @@ android {
         }
     }
 
+    packaging {
+        jniLibs {
+            // Store libflutter.so / libapp.so COMPRESSED. Modern default keeps them
+            // uncompressed (faster install, bigger download). We sideload, so a
+            // smaller APK file matters more; costs a one-time extraction on install.
+            useLegacyPackaging = true
+        }
+    }
+
     buildTypes {
         release {
+            isMinifyEnabled = true
+            isShrinkResources = true
             // Real release key when key.properties is present; debug key otherwise
             // (so `flutter run --release` still works on a machine without the key).
             signingConfig = if (hasReleaseKey) signingConfigs.getByName("release")

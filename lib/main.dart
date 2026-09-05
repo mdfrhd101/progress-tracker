@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'analytics/analytics_cubit.dart';
 import 'analytics/analytics_screen.dart';
+import 'settings/settings_cubit.dart';
 import 'theme/app_theme.dart';
 import 'tracker/tracker_cubit.dart';
 import 'tracker/tracker_screen.dart';
@@ -27,17 +28,33 @@ class ProgressTrackerApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
+        BlocProvider(create: (_) => SettingsCubit()..load()),
         // init() loads tasks and restores any in-flight session.
         BlocProvider(create: (_) => TrackerCubit()..init()),
         BlocProvider(create: (_) => AnalyticsCubit()),
       ],
-      child: MaterialApp(
-        title: 'Progress Tracker',
-        debugShowCheckedModeBanner: false,
-        theme: AppTheme.dark,
-        darkTheme: AppTheme.dark,
-        themeMode: ThemeMode.dark, // native dark-mode app
-        home: const RootNav(),
+      child: BlocBuilder<SettingsCubit, SettingsState>(
+        builder: (context, settings) {
+          final theme = AppTheme.build(
+            accent: settings.accent,
+            fontFamily: settings.fontFamily,
+          );
+          return MaterialApp(
+            title: 'Progress Tracker',
+            debugShowCheckedModeBanner: false,
+            theme: theme,
+            darkTheme: theme,
+            themeMode: ThemeMode.dark, // native dark-mode app
+            // User-chosen text size (Settings), applied app-wide.
+            builder: (context, child) => MediaQuery(
+              data: MediaQuery.of(context).copyWith(
+                textScaler: TextScaler.linear(settings.textScale),
+              ),
+              child: child ?? const SizedBox.shrink(),
+            ),
+            home: const RootNav(),
+          );
+        },
       ),
     );
   }

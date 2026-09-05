@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 
 import '../data/models/session.dart';
-import '../theme/app_theme.dart';
 import '../utils/formatters.dart';
 
 /// A dependency-free vertical bar chart of focus time for the last 7 days.
 /// Drawn entirely with a [CustomPainter] (no charting package).
 class SevenDayBarChart extends StatelessWidget {
   final List<DailyTotal> data; // oldest → newest, exactly 7 entries expected
+  final Color accent;
 
-  const SevenDayBarChart({super.key, required this.data});
+  const SevenDayBarChart({super.key, required this.data, required this.accent});
 
   @override
   Widget build(BuildContext context) {
@@ -17,7 +17,7 @@ class SevenDayBarChart extends StatelessWidget {
       height: 180,
       child: CustomPaint(
         size: Size.infinite,
-        painter: _BarChartPainter(data),
+        painter: _BarChartPainter(data, accent),
       ),
     );
   }
@@ -25,7 +25,8 @@ class SevenDayBarChart extends StatelessWidget {
 
 class _BarChartPainter extends CustomPainter {
   final List<DailyTotal> data;
-  _BarChartPainter(this.data);
+  final Color accent;
+  _BarChartPainter(this.data, this.accent);
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -56,9 +57,7 @@ class _BarChartPainter extends CustomPainter {
         topRight: const Radius.circular(6),
       );
       final paint = Paint()
-        ..color = isToday
-            ? AppColors.focus
-            : AppColors.focus.withValues(alpha: 0.35);
+        ..color = isToday ? accent : accent.withValues(alpha: 0.35);
       canvas.drawRRect(rect, paint);
 
       // Hour value above the bar (only when there is time)
@@ -77,7 +76,7 @@ class _BarChartPainter extends CustomPainter {
         canvas,
         Formatters.weekdayShort(d.dateString),
         Offset(cx, size.height - labelZone + 3),
-        color: isToday ? AppColors.focus : Colors.white54,
+        color: isToday ? accent : Colors.white54,
         size: 11,
         bold: isToday,
       );
@@ -101,5 +100,6 @@ class _BarChartPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant _BarChartPainter old) => old.data != data;
+  bool shouldRepaint(covariant _BarChartPainter old) =>
+      old.data != data || old.accent != accent;
 }

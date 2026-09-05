@@ -5,6 +5,11 @@ A 100% offline, single-user focus/productivity tracker for Android. Flutter +
 timestamp-based timer, and an optional Do-Not-Disturb (Deep Focus) mode.
 
 ## Highlights
+- **Settings (v1.3)** — sidebar → Settings: accent colour (6 swatches), font (Default / Serif /
+  Condensed / Monospace — Android system families, offline), text size, and an **Update**
+  section that shows the installed version and opens the GitHub releases page in the browser.
+- **Small APK** — native libs are stored compressed (`useLegacyPackaging`), R8 + resource
+  shrinking on: arm64 APK ≈ 7.4 MB (was 16 MB).
 - **Sub-tasks & targets (v1.2)** — sidebar (☰) → **Task List / Add Task**; group work as
   `Cloud › Python`, `Cloud › AWS`; set an hours target per task or sub-task (e.g. Python 100 h)
   and watch a progress bar on the tracker, in the task list and on a **Targets** analytics card.
@@ -73,7 +78,7 @@ flutter run           # on a connected Android device / emulator
 flutter build apk --release --split-per-abi --obfuscate --split-debug-info=build/symbols
 ```
 Install `build/app/outputs/flutter-apk/app-arm64-v8a-release.apk` on a modern phone
-(~16 MB). The un-split `app-release.apk` (~46 MB) works on any ABI.
+(~7.4 MB). The un-split `app-release.apk` works on any ABI.
 Confirm the release manifest still has **no** `INTERNET` permission.
 
 ## Download the latest APK (phone)

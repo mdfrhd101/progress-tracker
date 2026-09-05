@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../app_info.dart';
 import '../data/models/task.dart';
+import '../settings/settings_screen.dart';
 import '../tasks/task_manager_screen.dart';
 import '../theme/app_theme.dart';
 import '../utils/formatters.dart';
@@ -72,13 +74,13 @@ class _SideMenu extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Padding(
-              padding: EdgeInsets.fromLTRB(20, 20, 20, 8),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
               child: Row(
                 children: [
-                  Icon(Icons.timer, color: AppColors.focus),
-                  SizedBox(width: 10),
-                  Text('Progress Tracker',
+                  Icon(Icons.timer, color: context.accent),
+                  const SizedBox(width: 10),
+                  const Text('Progress Tracker',
                       style:
                           TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
                 ],
@@ -104,10 +106,22 @@ class _SideMenu extends StatelessWidget {
                 showTaskEditor(context);
               },
             ),
+            const Divider(color: Colors.white10),
+            ListTile(
+              leading: const Icon(Icons.tune_rounded),
+              title: const Text('Settings'),
+              subtitle: const Text('Colour, font, text size, updates',
+                  style: TextStyle(fontSize: 12)),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const SettingsScreen()));
+              },
+            ),
             const Spacer(),
             const Padding(
               padding: EdgeInsets.all(20),
-              child: Text('v1.2  ·  100% offline',
+              child: Text('v${AppInfo.version}  ·  100% offline',
                   style: TextStyle(color: Colors.white30, fontSize: 11)),
             ),
           ],
@@ -146,11 +160,11 @@ class _SelectedTaskCard extends StatelessWidget {
             child: Padding(
               padding: const EdgeInsets.fromLTRB(16, 14, 12, 14),
               child: task == null
-                  ? const Row(
+                  ? Row(
                       children: [
-                        Icon(Icons.add_circle_outline, color: AppColors.focus),
-                        SizedBox(width: 10),
-                        Text('Tap to add your first task',
+                        Icon(Icons.add_circle_outline, color: context.accent),
+                        const SizedBox(width: 10),
+                        const Text('Tap to add your first task',
                             style: TextStyle(color: Colors.white70)),
                       ],
                     )
@@ -204,14 +218,14 @@ class _TaskSummary extends StatelessWidget {
             children: [
               if (parent != null)
                 Text(parent.name,
-                    style: const TextStyle(
-                        color: Colors.white54, fontSize: 12)),
+                    style:
+                        const TextStyle(color: Colors.white54, fontSize: 12)),
               Text(task.name,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
+                  style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w700,
-                      color: AppColors.focus)),
+                      color: context.accent)),
               if (task.hasTarget) ...[
                 const SizedBox(height: 8),
                 ClipRRect(
@@ -220,8 +234,7 @@ class _TaskSummary extends StatelessWidget {
                     value: progress,
                     minHeight: 6,
                     backgroundColor: AppColors.surfaceHigh,
-                    valueColor: const AlwaysStoppedAnimation<Color>(
-                        AppColors.focus),
+                    valueColor: AlwaysStoppedAnimation<Color>(context.accent),
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -343,13 +356,13 @@ class _PickerTile extends StatelessWidget {
       contentPadding: EdgeInsets.only(left: indent ? 36 : 12, right: 12),
       leading: Icon(
         selected ? Icons.radio_button_checked : Icons.radio_button_off,
-        color: selected ? AppColors.focus : Colors.white38,
+        color: selected ? context.accent : Colors.white38,
         size: 20,
       ),
       title: Text(task.name,
           style: TextStyle(
               fontWeight: indent ? FontWeight.w500 : FontWeight.w700,
-              color: selected ? AppColors.focus : Colors.white)),
+              color: selected ? context.accent : Colors.white)),
       trailing: Text(Formatters.human(total),
           style: const TextStyle(
               fontFamily: AppTheme.monoFont,
@@ -439,7 +452,7 @@ class _StatusTag extends StatelessWidget {
         label = 'Idle';
         break;
       case TrackerStatus.inProgress:
-        color = AppColors.focus;
+        color = context.accent;
         label = 'In Progress';
         break;
       case TrackerStatus.onBreak:
@@ -466,12 +479,11 @@ class _StatusTag extends StatelessWidget {
               style: TextStyle(color: color, fontWeight: FontWeight.w600)),
           if (state.isDeepFocus && !state.isIdle) ...[
             const SizedBox(width: 8),
-            const Icon(Icons.do_not_disturb_on,
-                size: 16, color: AppColors.focus),
+            Icon(Icons.do_not_disturb_on, size: 16, color: context.accent),
             const SizedBox(width: 2),
-            const Text('DND',
+            Text('DND',
                 style: TextStyle(
-                    color: AppColors.focus,
+                    color: context.accent,
                     fontSize: 11,
                     fontWeight: FontWeight.w700)),
           ],
@@ -497,7 +509,7 @@ class _ActionButtons extends StatelessWidget {
           onPressed: state.selectedTask == null
               ? null
               : () => _openStartSheet(context),
-          style: FilledButton.styleFrom(backgroundColor: AppColors.focus),
+          style: FilledButton.styleFrom(backgroundColor: context.accent),
           icon: const Icon(Icons.play_arrow_rounded),
           label: const Text('Start Session'),
         );
@@ -532,8 +544,7 @@ class _ActionButtons extends StatelessWidget {
                   HapticFeedback.selectionClick();
                   cubit.resumeSession();
                 },
-                style:
-                    FilledButton.styleFrom(backgroundColor: AppColors.focus),
+                style: FilledButton.styleFrom(backgroundColor: context.accent),
                 icon: const Icon(Icons.play_arrow_rounded),
                 label: const Text('Resume Session'),
               ),
@@ -570,8 +581,7 @@ class _ActionButtons extends StatelessWidget {
       if (!granted) {
         await cubit.openDndSettings();
         messenger.showSnackBar(const SnackBar(
-          content: Text(
-              'Grant "Do Not Disturb access", then tap Start again.'),
+          content: Text('Grant "Do Not Disturb access", then tap Start again.'),
         ));
         return;
       }
@@ -670,7 +680,7 @@ class _StartSessionSheetState extends State<_StartSessionSheet> {
             ),
             child: SwitchListTile(
               value: _deepFocus,
-              activeThumbColor: AppColors.focus,
+              activeThumbColor: context.accent,
               onChanged: (v) => setState(() => _deepFocus = v),
               secondary: const Icon(Icons.do_not_disturb_on_outlined),
               title: const Text('Enable Do Not Disturb',
@@ -698,7 +708,7 @@ class _StartSessionSheetState extends State<_StartSessionSheet> {
                   onPressed: () =>
                       Navigator.pop(context, _StartResult(_deepFocus)),
                   style:
-                      FilledButton.styleFrom(backgroundColor: AppColors.focus),
+                      FilledButton.styleFrom(backgroundColor: context.accent),
                   child: const Text('Start'),
                 ),
               ),
@@ -739,7 +749,7 @@ class _EndSessionSheet extends StatelessWidget {
                 child: _StatTile(
                   label: 'FOCUS',
                   value: Formatters.hms(state.activeSeconds),
-                  color: AppColors.focus,
+                  color: context.accent,
                 ),
               ),
               const SizedBox(width: 12),
@@ -777,7 +787,7 @@ class _EndSessionSheet extends StatelessWidget {
                 child: FilledButton(
                   onPressed: () => Navigator.pop(context, _EndChoice.save),
                   style:
-                      FilledButton.styleFrom(backgroundColor: AppColors.focus),
+                      FilledButton.styleFrom(backgroundColor: context.accent),
                   child: const Text('Save Session'),
                 ),
               ),

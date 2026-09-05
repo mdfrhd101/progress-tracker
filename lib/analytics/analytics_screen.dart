@@ -54,8 +54,10 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                 _BreakdownCard(state: state),
                 const SizedBox(height: 20),
                 Text('SESSION HISTORY',
-                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        letterSpacing: 1.5, color: Colors.white54)),
+                    style: Theme.of(context)
+                        .textTheme
+                        .labelSmall
+                        ?.copyWith(letterSpacing: 1.5, color: Colors.white54)),
                 const SizedBox(height: 8),
                 if (state.history.isEmpty)
                   const _EmptyHint('No sessions yet — start a focus session.')
@@ -74,8 +76,8 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
   List<Widget> _buildGroupedHistory(List<SessionView> history) {
     final nowMs = DateTime.now().millisecondsSinceEpoch;
     final today = Session.dateStringFrom(nowMs);
-    final yesterday = Session.dateStringFrom(
-        nowMs - const Duration(days: 1).inMilliseconds);
+    final yesterday =
+        Session.dateStringFrom(nowMs - const Duration(days: 1).inMilliseconds);
 
     final widgets = <Widget>[];
     String? lastDate;
@@ -110,7 +112,7 @@ class _SummaryRow extends StatelessWidget {
           child: _StatCard(
             label: "Today's Focus",
             value: Formatters.human(state.todaySeconds),
-            accent: AppColors.focus,
+            accent: context.accent,
             icon: Icons.today_rounded,
           ),
         ),
@@ -153,8 +155,8 @@ class _StatCard extends StatelessWidget {
           Icon(icon, color: accent, size: 20),
           const SizedBox(height: 12),
           Text(value,
-              style: const TextStyle(
-                  fontSize: 24, fontWeight: FontWeight.w700)),
+              style:
+                  const TextStyle(fontSize: 24, fontWeight: FontWeight.w700)),
           const SizedBox(height: 4),
           Text(label,
               style: const TextStyle(color: Colors.white54, fontSize: 12)),
@@ -209,13 +211,12 @@ class _MiniStat extends StatelessWidget {
           Flexible(
             child: Text(label,
                 overflow: TextOverflow.ellipsis,
-                style:
-                    const TextStyle(color: Colors.white54, fontSize: 12)),
+                style: const TextStyle(color: Colors.white54, fontSize: 12)),
           ),
           const SizedBox(width: 8),
           Text(value,
-              style: const TextStyle(
-                  fontSize: 15, fontWeight: FontWeight.w700)),
+              style:
+                  const TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
         ],
       ),
     );
@@ -242,7 +243,7 @@ class _TrendCard extends StatelessWidget {
           const Text('7-Day Trend',
               style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
           const SizedBox(height: 12),
-          SevenDayBarChart(data: state.trend),
+          SevenDayBarChart(data: state.trend, accent: context.accent),
         ],
       ),
     );
@@ -284,9 +285,8 @@ class _TargetRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final done = t.fraction >= 1;
     final h = t.task.targetHours!;
-    final target = h == h.roundToDouble()
-        ? '${h.round()}h'
-        : '${h.toStringAsFixed(1)}h';
+    final target =
+        h == h.roundToDouble() ? '${h.round()}h' : '${h.toStringAsFixed(1)}h';
     return Padding(
       padding: const EdgeInsets.only(bottom: 14),
       child: Column(
@@ -303,7 +303,7 @@ class _TargetRow extends StatelessWidget {
                 '${Formatters.human(t.totalSeconds)} / $target'
                 '  ·  ${(t.fraction * 100).round()}%${done ? '  ✓' : ''}',
                 style: TextStyle(
-                    color: done ? AppColors.focus : Colors.white70,
+                    color: done ? context.accent : Colors.white70,
                     fontSize: 12),
               ),
             ],
@@ -315,8 +315,7 @@ class _TargetRow extends StatelessWidget {
               value: t.fraction,
               minHeight: 8,
               backgroundColor: AppColors.surfaceHigh,
-              valueColor:
-                  const AlwaysStoppedAnimation<Color>(AppColors.focus),
+              valueColor: AlwaysStoppedAnimation<Color>(context.accent),
             ),
           ),
         ],
@@ -418,8 +417,7 @@ class _BreakdownRow extends StatelessWidget {
               value: fraction.clamp(0.0, 1.0),
               minHeight: 8,
               backgroundColor: AppColors.surfaceHigh,
-              valueColor:
-                  const AlwaysStoppedAnimation<Color>(AppColors.focus),
+              valueColor: AlwaysStoppedAnimation<Color>(context.accent),
             ),
           ),
         ],
@@ -479,7 +477,7 @@ class _HistoryTile extends StatelessWidget {
             content: const Text('Session deleted'),
             action: SnackBarAction(
               label: 'UNDO',
-              textColor: AppColors.focus,
+              textColor: context.accent,
               onPressed: () => cubit.restoreSession(s),
             ),
           ));
@@ -511,12 +509,12 @@ class _HistoryTile extends StatelessWidget {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 6, vertical: 2),
                           decoration: BoxDecoration(
-                            color: AppColors.focus.withValues(alpha: 0.18),
+                            color: context.accent.withValues(alpha: 0.18),
                             borderRadius: BorderRadius.circular(6),
                           ),
-                          child: const Text('DND',
+                          child: Text('DND',
                               style: TextStyle(
-                                  color: AppColors.focus,
+                                  color: context.accent,
                                   fontSize: 10,
                                   fontWeight: FontWeight.w700)),
                         ),
@@ -526,8 +524,7 @@ class _HistoryTile extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text(
                     Formatters.timeRange(s.startTime, s.endTime),
-                    style:
-                        const TextStyle(color: Colors.white54, fontSize: 12),
+                    style: const TextStyle(color: Colors.white54, fontSize: 12),
                   ),
                   const SizedBox(height: 2),
                   Text(
@@ -540,11 +537,11 @@ class _HistoryTile extends StatelessWidget {
             ),
             Text(
               Formatters.human(s.activeDurationSeconds),
-              style: const TextStyle(
+              style: TextStyle(
                   fontFamily: AppTheme.monoFont,
                   fontWeight: FontWeight.w700,
                   fontSize: 15,
-                  color: AppColors.focus),
+                  color: context.accent),
             ),
           ],
         ),

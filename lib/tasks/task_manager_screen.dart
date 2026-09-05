@@ -18,11 +18,12 @@ class TaskManagerScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Tasks', style: TextStyle(fontWeight: FontWeight.w700)),
+        title:
+            const Text('Tasks', style: TextStyle(fontWeight: FontWeight.w700)),
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => showTaskEditor(context),
-        backgroundColor: AppColors.focus,
+        backgroundColor: context.accent,
         foregroundColor: Colors.black,
         icon: const Icon(Icons.add),
         label: const Text('Add Task'),
@@ -115,8 +116,8 @@ class _TaskRow extends StatelessWidget {
             }
           : null,
       child: Padding(
-        padding: EdgeInsets.fromLTRB(isRoot ? 16 : 24, isRoot ? 14 : 10, 6,
-            isRoot ? 12 : 10),
+        padding: EdgeInsets.fromLTRB(
+            isRoot ? 16 : 24, isRoot ? 14 : 10, 6, isRoot ? 12 : 10),
         child: Row(
           children: [
             Container(
@@ -124,7 +125,7 @@ class _TaskRow extends StatelessWidget {
               height: 8,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: selected ? AppColors.focus : Colors.white24,
+                color: selected ? context.accent : Colors.white24,
               ),
             ),
             const SizedBox(width: 12),
@@ -142,7 +143,7 @@ class _TaskRow extends StatelessWidget {
                             fontSize: isRoot ? 16 : 14,
                             fontWeight:
                                 isRoot ? FontWeight.w700 : FontWeight.w600,
-                            color: selected ? AppColors.focus : Colors.white,
+                            color: selected ? context.accent : Colors.white,
                           ),
                         ),
                       ),
@@ -167,9 +168,11 @@ class _TaskRow extends StatelessWidget {
               icon: const Icon(Icons.more_vert, color: Colors.white54),
               onSelected: (v) => _onMenu(context, v),
               itemBuilder: (_) => [
-                const PopupMenuItem(value: 'edit', child: Text('Edit / set target')),
+                const PopupMenuItem(
+                    value: 'edit', child: Text('Edit / set target')),
                 if (isRoot)
-                  const PopupMenuItem(value: 'sub', child: Text('Add sub-task')),
+                  const PopupMenuItem(
+                      value: 'sub', child: Text('Add sub-task')),
                 PopupMenuItem(
                   value: 'delete',
                   enabled: state.isIdle,
@@ -193,8 +196,8 @@ class _TaskRow extends StatelessWidget {
         await showTaskEditor(context, parentId: task.id);
         break;
       case 'delete':
-        await confirmDeleteTask(context, task, hasChildren: isRoot &&
-            state.childrenOf(task.id!).isNotEmpty);
+        await confirmDeleteTask(context, task,
+            hasChildren: isRoot && state.childrenOf(task.id!).isNotEmpty);
         break;
     }
   }
@@ -221,7 +224,7 @@ class _TargetBar extends StatelessWidget {
             minHeight: 6,
             backgroundColor: AppColors.surfaceHigh,
             valueColor: AlwaysStoppedAnimation<Color>(
-                done ? AppColors.focus : AppColors.focus.withValues(alpha: 0.75)),
+                done ? context.accent : context.accent.withValues(alpha: 0.75)),
           ),
         ),
         const SizedBox(height: 4),
@@ -252,9 +255,8 @@ Future<void> showTaskEditor(BuildContext context,
           ? ''
           : _fmtHours(existing!.targetHours!).replaceAll('h', ''));
   int? chosenParent = parentId ?? existing?.parentId;
-  final roots = cubit.state.rootTasks
-      .where((t) => t.id != existing?.id)
-      .toList();
+  final roots =
+      cubit.state.rootTasks.where((t) => t.id != existing?.id).toList();
   final isEdit = existing != null;
 
   final ok = await showDialog<bool>(
@@ -280,7 +282,8 @@ Future<void> showTaskEditor(BuildContext context,
             if (!isEdit && parentId == null && roots.isNotEmpty)
               DropdownButtonFormField<int?>(
                 initialValue: chosenParent,
-                decoration: const InputDecoration(labelText: 'Under (optional)'),
+                decoration:
+                    const InputDecoration(labelText: 'Under (optional)'),
                 items: [
                   const DropdownMenuItem<int?>(
                       value: null, child: Text('None — top-level task')),
