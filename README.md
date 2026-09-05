@@ -76,6 +76,26 @@ Install `build/app/outputs/flutter-apk/app-arm64-v8a-release.apk` on a modern ph
 (~16 MB). The un-split `app-release.apk` (~46 MB) works on any ABI.
 Confirm the release manifest still has **no** `INTERNET` permission.
 
+## Download the latest APK (phone)
+Releases are published automatically by CI on every version tag:
+
+- Latest release page: https://github.com/mdfrhd101/progress-tracker/releases/latest
+- Direct arm64 APK: https://github.com/mdfrhd101/progress-tracker/releases/latest/download/app-arm64-v8a-release.apk
+
+The repo is private, so sign in to GitHub in the phone browser first. Install over the
+previous version; data is kept. APKs are signed with the project release key
+(cert `CN=Progress Tracker`), so they update in place.
+
+## Shipping a new version (maintainer)
+```bash
+# 1. bump version in pubspec.yaml (e.g. 1.3.0+5), add a DB migration if the schema changed
+# 2. commit, then tag and push — CI does analyze → test → signed build → GitHub Release
+git tag -a v1.3.0 -m "v1.3.0" && git push origin main v1.3.0
+```
+Secrets used by CI: `ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`,
+`ANDROID_KEY_PASSWORD`, `ANDROID_KEY_ALIAS`. The keystore lives outside the repo
+(`D:\dev\keys\`); `android/key.properties` is gitignored.
+
 ## Updating the app (the "update pipeline")
 The app has **no INTERNET permission**, so it cannot fetch updates itself — by design.
 Updates are shipped as a new APK: bump `version:` in `pubspec.yaml`, add a DB migration in
