@@ -2,7 +2,7 @@
 class AppInfo {
   AppInfo._();
 
-  static const String version = '1.7.0';
+  static const String version = '1.8.0';
   static const String repo = 'mdfrhd101/progress-tracker';
 
   /// Human page with all releases (browser fallback).

@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'analytics/analytics_cubit.dart';
 import 'analytics/analytics_screen.dart';
 import 'multitasking/multitasking_cubit.dart';
+import 'services/cloud_sync_service.dart';
 import 'settings/settings_cubit.dart';
 import 'theme/app_theme.dart';
 import 'tracker/tracker_cubit.dart';
@@ -70,10 +71,49 @@ class RootNav extends StatefulWidget {
   State<RootNav> createState() => _RootNavState();
 }
 
-class _RootNavState extends State<RootNav> {
+class _RootNavState extends State<RootNav> with WidgetsBindingObserver {
+  final _cloud = CloudSyncService();
   int _index = 0;
 
   static const _screens = [TrackerScreen(), AnalyticsScreen()];
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _maybeAutoSync();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) _maybeAutoSync();
+  }
+
+  /// Silent cloud sync when the app opens/resumes, if enabled and configured.
+  Future<void> _maybeAutoSync() async {
+    try {
+      if (!await _cloud.autoEnabled()) return;
+      if (await _cloud.token() == null || await _cloud.gistId() == null) return;
+      final r = await _cloud.sync();
+      if (!mounted) return;
+      if (r.tasksAdded > 0 || r.sessionsAdded > 0) {
+        context.read<TrackerCubit>().init();
+        context.read<AnalyticsCubit>().load();
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(
+              'Cloud sync: +${r.tasksAdded} tasks, +${r.sessionsAdded} sessions'),
+        ));
+      }
+    } catch (_) {
+      // silent — manual Sync surfaces errors
+    }
+  }
 
   void _onTab(int i) {
     setState(() => _index = i);

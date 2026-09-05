@@ -5,6 +5,11 @@ A 100% offline, single-user focus/productivity tracker for Android. Flutter +
 timestamp-based timer, and an optional Do-Not-Disturb (Deep Focus) mode.
 
 ## Highlights
+- **Cloud sync (v1.8, offline-first sync — step 3/3)** — Settings → Backup & transfer → Cloud
+  sync: syncs two phones through your **own private GitHub Gist**. Paste a Gist-scoped token once
+  (stored only on the phone, never in the APK or backups), Create a sync on one phone, Join with
+  the code on the other. Sync = pull → UUID union-merge → push. Optional auto-sync when you open
+  the app. The app talks only to GitHub; tracking data goes nowhere else.
 - **LAN sync (v1.7, offline sync — step 2/3)** — Settings → Backup & transfer → LAN sync:
   both phones on the same Wi-Fi; one Hosts (shows IP + 6-digit PIN), the other Joins. One
   raw-TCP exchange merges both devices — no file, no internet, no account.

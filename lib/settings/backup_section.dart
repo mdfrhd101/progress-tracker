@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../analytics/analytics_cubit.dart';
 import '../services/backup_service.dart';
+import '../sync/cloud_sync_screen.dart';
 import '../sync/lan_sync_screen.dart';
 import '../theme/app_theme.dart';
 import '../tracker/tracker_cubit.dart';
@@ -160,6 +161,17 @@ class _BackupSectionState extends State<BackupSection> {
                 minimumSize: const Size.fromHeight(46)),
             icon: const Icon(Icons.wifi_tethering_rounded),
             label: const Text('LAN sync (same Wi-Fi)'),
+          ),
+          const SizedBox(height: 8),
+          OutlinedButton.icon(
+            onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const CloudSyncScreen())),
+            style: OutlinedButton.styleFrom(
+                side: const BorderSide(color: Colors.white24),
+                foregroundColor: Colors.white,
+                minimumSize: const Size.fromHeight(46)),
+            icon: const Icon(Icons.cloud_sync_rounded),
+            label: const Text('Cloud sync (GitHub)'),
           ),
         ],
       ),
