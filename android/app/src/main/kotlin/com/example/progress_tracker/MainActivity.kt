@@ -7,6 +7,8 @@ import android.net.Uri
 import android.os.Build
 import android.provider.Settings
 import androidx.annotation.NonNull
+import androidx.core.content.FileProvider
+import java.io.File
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
@@ -43,6 +45,35 @@ class MainActivity : FlutterActivity() {
                             result.success(false)
                         }
                     }
+                    // Primary device ABI, e.g. "arm64-v8a" (picks the matching release asset).
+                    "getAbi" -> result.success(Build.SUPPORTED_ABIS.firstOrNull() ?: "arm64-v8a")
+
+                    // Hands a downloaded APK to the system installer. Returns
+                    // "ok", "permission" (user must allow installs), or "error".
+                    "installApk" -> {
+                        val path = call.argument<String>("path")
+                        if (path.isNullOrBlank()) { result.success("error"); return@setMethodCallHandler }
+                        try {
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
+                                !packageManager.canRequestPackageInstalls()) {
+                                val i = Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
+                                    Uri.parse("package:$packageName")).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                startActivity(i)
+                                result.success("permission")
+                                return@setMethodCallHandler
+                            }
+                            val file = File(path)
+                            val uri = FileProvider.getUriForFile(this, "$packageName.fileprovider", file)
+                            val intent = Intent(Intent.ACTION_VIEW)
+                                .setDataAndType(uri, "application/vnd.android.package-archive")
+                                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                            startActivity(intent)
+                            result.success("ok")
+                        } catch (e: Exception) {
+                            result.success("error")
+                        }
+                    }
+
                     else -> result.notImplemented()
                 }
             }

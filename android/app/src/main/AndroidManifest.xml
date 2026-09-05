@@ -1,13 +1,18 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <!-- =====================================================================
-         OFFLINE-FIRST PERMISSION POLICY
-         - NO <uses-permission android:name="android.permission.INTERNET"/>
-           => the app literally cannot open a socket. 100% offline by design.
-         - ACCESS_NOTIFICATION_POLICY is the ONLY sensitive permission, needed
-           to toggle Do-Not-Disturb (Deep Focus). It grants no network access.
+         PERMISSION POLICY
+         - ACCESS_NOTIFICATION_POLICY: toggle Do-Not-Disturb (Deep Focus).
+         - INTERNET + REQUEST_INSTALL_PACKAGES: self-update from GitHub Releases
+           only. All tracking data stays local in SQLite.
          ===================================================================== -->
     <uses-permission android:name="android.permission.ACCESS_NOTIFICATION_POLICY" />
+
+    <!-- In-app updater (v1.4+): INTERNET queries GitHub Releases and downloads the
+         new APK; REQUEST_INSTALL_PACKAGES hands that APK to the system installer.
+         No tracking data ever leaves the device. -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
 
     <application
         android:label="Progress Tracker"
@@ -34,7 +39,17 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+
+        <!-- Exposes the downloaded update APK (cache/updates/) to the installer. -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
     </application>
 
-    <!-- No <queries> for external apps/browsers — nothing is launched externally. -->
 </manifest>

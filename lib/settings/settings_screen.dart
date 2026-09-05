@@ -2,10 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../app_info.dart';
-import '../services/platform_service.dart';
 import '../theme/app_theme.dart';
 import 'settings_cubit.dart';
+import 'update_section.dart';
 
 /// Look & feel + update entry point. Everything is applied live and saved.
 class SettingsScreen extends StatelessWidget {
@@ -88,35 +87,7 @@ class SettingsScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 16),
-              _SectionCard(
-                title: 'Update',
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    const Text('Installed version  ${AppInfo.version}',
-                        style: TextStyle(color: Colors.white70)),
-                    const SizedBox(height: 4),
-                    const Text(
-                      'The app itself never touches the network. Updates are '
-                      'published on GitHub; this opens the releases page in '
-                      'your browser — install the newest APK over this one, '
-                      'your data is kept.',
-                      style: TextStyle(color: Colors.white38, fontSize: 12),
-                    ),
-                    const SizedBox(height: 12),
-                    FilledButton.icon(
-                      onPressed: () =>
-                          const PlatformService().openUrl(AppInfo.releasesUrl),
-                      style: FilledButton.styleFrom(
-                          backgroundColor: context.accent,
-                          foregroundColor: Colors.black,
-                          minimumSize: const Size.fromHeight(46)),
-                      icon: const Icon(Icons.system_update_alt_rounded),
-                      label: const Text('Get latest version'),
-                    ),
-                  ],
-                ),
-              ),
+              const UpdateSection(),
               const SizedBox(height: 24),
               TextButton(
                 onPressed: () {

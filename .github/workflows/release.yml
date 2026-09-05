@@ -51,12 +51,13 @@ jobs:
       - name: Build signed release APKs
         run: flutter build apk --release --split-per-abi --obfuscate --split-debug-info=build/symbols
 
-      - name: Verify offline manifest (no INTERNET) and minSdk >= 23
+      - name: Verify permission allow-list and minSdk >= 23
         run: |
           APK=build/app/outputs/flutter-apk/app-arm64-v8a-release.apk
           AAPT=$(ls "$ANDROID_HOME"/build-tools/*/aapt2 | tail -1)
-          if "$AAPT" dump permissions "$APK" | grep -q 'android.permission.INTERNET'; then
-            echo "::error::INTERNET permission found — app must stay offline"; exit 1; fi
+          ALLOWED='ACCESS_NOTIFICATION_POLICY|permission.INTERNET|REQUEST_INSTALL_PACKAGES|DYNAMIC_RECEIVER_NOT_EXPORTED'
+          if "$AAPT" dump permissions "$APK" | grep 'uses-permission' | grep -vE "$ALLOWED"; then
+            echo "::error::unexpected permission in APK"; exit 1; fi
           MIN=$("$AAPT" dump badging "$APK" | sed -n "s/^minSdkVersion:'\([0-9]*\)'.*/\1/p")
           echo "minSdk=$MIN"; [ "$MIN" -ge 23 ]
 

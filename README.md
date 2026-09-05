@@ -5,6 +5,9 @@ A 100% offline, single-user focus/productivity tracker for Android. Flutter +
 timestamp-based timer, and an optional Do-Not-Disturb (Deep Focus) mode.
 
 ## Highlights
+- **In-app updates (v1.4)** — Settings → Update → **Check for updates**. The app queries its
+  public GitHub Releases, downloads the APK matching your device, and launches the installer —
+  no browser, no manual download. This is the only feature that uses the network.
 - **Settings (v1.3)** — sidebar → Settings: accent colour (6 swatches), font (Default / Serif /
   Condensed / Monospace — Android system families, offline), text size, and an **Update**
   section that shows the installed version and opens the GitHub releases page in the browser.
@@ -18,7 +21,8 @@ timestamp-based timer, and an optional Do-Not-Disturb (Deep Focus) mode.
   end-of-session summary sheet with **Save / Discard** (no accidental records), date-grouped
   history with **Undo** on swipe-delete, "sessions today" + "avg session" stats, haptic
   feedback, custom adaptive app icon, dark splash (no white flash), themed system bars.
-- **Zero network** — no `INTERNET` permission is declared; the app cannot open a socket.
+- **Offline tracking** — all tracking, storage and analytics are 100% local (SQLite); nothing
+  is ever sent anywhere. Network is used *only* by the opt-in updater (Settings → Update).
 - **No login** — single local user.
 - **Resilient timer** — elapsed time is recomputed from epoch timestamps every tick, so it
   never drifts while backgrounded/screen-off; the in-flight session is mirrored to SQLite,
