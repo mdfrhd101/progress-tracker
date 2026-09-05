@@ -5,6 +5,10 @@ A 100% offline, single-user focus/productivity tracker for Android. Flutter +
 timestamp-based timer, and an optional Do-Not-Disturb (Deep Focus) mode.
 
 ## Highlights
+- **Multitasking (v1.5)** — sidebar → Multitasking: run several task timers at the same time,
+  start more whenever you like, each keeps its own time (Break / Resume / Stop per timer).
+  Stopping saves a normal session, so history/analytics/targets include it. Survives
+  background/kill via the `active_multi` table.
 - **In-app updates (v1.4)** — Settings → Update → **Check for updates**. The app queries its
   public GitHub Releases, downloads the APK matching your device, and launches the installer —
   no browser, no manual download. This is the only feature that uses the network.

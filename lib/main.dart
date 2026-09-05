@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'analytics/analytics_cubit.dart';
 import 'analytics/analytics_screen.dart';
+import 'multitasking/multitasking_cubit.dart';
 import 'settings/settings_cubit.dart';
 import 'theme/app_theme.dart';
 import 'tracker/tracker_cubit.dart';
@@ -32,6 +33,7 @@ class ProgressTrackerApp extends StatelessWidget {
         // init() loads tasks and restores any in-flight session.
         BlocProvider(create: (_) => TrackerCubit()..init()),
         BlocProvider(create: (_) => AnalyticsCubit()),
+        BlocProvider(create: (_) => MultitaskingCubit()),
       ],
       child: BlocBuilder<SettingsCubit, SettingsState>(
         builder: (context, settings) {

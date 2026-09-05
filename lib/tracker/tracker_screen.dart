@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../app_info.dart';
 import '../data/models/task.dart';
+import '../multitasking/multitasking_screen.dart';
 import '../settings/settings_screen.dart';
 import '../tasks/task_manager_screen.dart';
 import '../theme/app_theme.dart';
@@ -104,6 +105,18 @@ class _SideMenu extends StatelessWidget {
               onTap: () {
                 Navigator.pop(context);
                 showTaskEditor(context);
+              },
+            ),
+            const Divider(color: Colors.white10),
+            ListTile(
+              leading: const Icon(Icons.dynamic_feed_rounded),
+              title: const Text('Multitasking'),
+              subtitle: const Text('Run several timers at once',
+                  style: TextStyle(fontSize: 12)),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.of(context).push(MaterialPageRoute(
+                    builder: (_) => const MultitaskingScreen()));
               },
             ),
             const Divider(color: Colors.white10),

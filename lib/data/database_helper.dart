@@ -22,7 +22,7 @@ class DatabaseHelper {
   static final DatabaseHelper instance = DatabaseHelper._internal();
 
   static const String _dbName = 'progress_tracker.db';
-  static const int _dbVersion = 3;
+  static const int _dbVersion = 4;
 
   /// Default tasks seeded on first launch.
   static const List<String> defaultTasks = <String>[
@@ -103,6 +103,7 @@ class DatabaseHelper {
       )
     ''');
 
+    await _createMultiTable(db);
     await _createPrefsTable(db);
 
     // Seed default tasks in one transaction.
@@ -130,6 +131,24 @@ class DatabaseHelper {
       await db.execute(
           'CREATE INDEX IF NOT EXISTS idx_tasks_parent ON tasks(parent_id)');
     }
+    if (oldVersion < 4) {
+      await _createMultiTable(db);
+    }
+  }
+
+  Future<void> _createMultiTable(Database db) async {
+    // One row per concurrently-running (multitasking) timer. Deleting a task
+    // cascades its running timers. `status` is 'running' or 'break'.
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS active_multi (
+        id                     INTEGER PRIMARY KEY AUTOINCREMENT,
+        task_id                INTEGER NOT NULL REFERENCES tasks(id) ON DELETE CASCADE,
+        start_time             INTEGER NOT NULL,
+        accumulated_break_ms   INTEGER NOT NULL,
+        current_break_start_ms INTEGER NOT NULL,
+        status                 TEXT    NOT NULL
+      )
+    ''');
   }
 
   Future<void> _createPrefsTable(Database db) async {
@@ -267,6 +286,28 @@ class DatabaseHelper {
   Future<void> clearActiveSession() async {
     final db = await database;
     await db.delete('active_session', where: 'id = 1');
+  }
+
+  // ------------------------------------------------ Multitasking (parallel)
+
+  Future<int> insertMulti(Map<String, Object?> row) async {
+    final db = await database;
+    return db.insert('active_multi', row);
+  }
+
+  Future<void> updateMulti(int id, Map<String, Object?> row) async {
+    final db = await database;
+    await db.update('active_multi', row, where: 'id = ?', whereArgs: [id]);
+  }
+
+  Future<void> deleteMulti(int id) async {
+    final db = await database;
+    await db.delete('active_multi', where: 'id = ?', whereArgs: [id]);
+  }
+
+  Future<List<Map<String, Object?>>> getAllMulti() async {
+    final db = await database;
+    return db.query('active_multi', orderBy: 'start_time ASC');
   }
 
   // -------------------------------------------------------------- Analytics

@@ -214,7 +214,7 @@ void main() {
     expect(await db.sessionCount(), 0);
   });
 
-  test('migration v1 -> v3 keeps data and adds columns', () async {
+  test('migration v1 -> v4 keeps data and adds columns/tables', () async {
     // Build a v1 schema by hand, then let DatabaseHelper upgrade it.
     await db.close();
     final v1 = await databaseFactory.openDatabase(
@@ -280,7 +280,18 @@ void main() {
           Task.create('Sub', parentId: tasks.single.id, targetSeconds: 10));
       expect((await db.getTaskById(subId))!.parentId,
           tasks.single.id); // v3 columns work
-      expect(await (await db.database).getVersion(), 3);
+      expect(await (await db.database).getVersion(), 4);
+      // v4 multitasking table works.
+      final mId = await db.insertMulti({
+        'task_id': tasks.single.id,
+        'start_time': 1,
+        'accumulated_break_ms': 0,
+        'current_break_start_ms': 0,
+        'status': 'running',
+      });
+      expect((await db.getAllMulti()).length, 1);
+      await db.deleteMulti(mId);
+      expect((await db.getAllMulti()).isEmpty, isTrue);
     } finally {
       await db.close();
       DatabaseHelper.databasePathOverride = inMemoryDatabasePath;
