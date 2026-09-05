@@ -1,0 +1,36 @@
+name: progress_tracker
+description: "A 100% offline, single-user personal Progress Tracker with focus timer, DND deep-focus mode, and local analytics."
+publish_to: "none"
+version: 1.2.1+4
+
+environment:
+  sdk: ">=3.3.0 <4.0.0"
+  flutter: ">=3.19.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # State management — predictable state machine (Idle / In Progress / On Break)
+  flutter_bloc: ^8.1.6
+  equatable: ^2.0.5
+
+  # Local storage (offline SQLite)
+  sqflite: ^2.3.3+1
+  path: ^1.9.0
+  path_provider: ^2.1.4
+
+  # Date/time + duration formatting (HH:MM:SS, YYYY-MM-DD, time ranges)
+  intl: ^0.19.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+
+  # Lets us unit-test the SQLite layer on desktop (no emulator needed)
+  sqflite_common_ffi: ^2.3.3
+
+flutter:
+  uses-material-design: true
+  # Bundled offline monospace + UI fonts are added in Phase 3 (no network font fetching).
